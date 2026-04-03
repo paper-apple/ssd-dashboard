@@ -1,0 +1,31 @@
+- id: SDD-UI-001
+  title: Dashboard layout
+  description: User MUST be able to view all specifications in a single dashboard interface
+
+- id: SDD-UI-002
+  title: Coverage metrics display
+  description: User MUST be able to see overall coverage percentage at the top of the dashboard
+
+- id: SDD-UI-003
+  title: Filter by status
+  description: User MUST be able to filter specifications by coverage status
+
+- id: SDD-UI-004
+  title: Search by text
+  description: User MUST be able to search specifications by ID or title
+
+- id: SDD-UI-005
+  title: Coverage visualization
+  description: User MUST be able to see coverage percentage as a progress bar for each specification
+
+- id: SDD-UI-006
+  title: Coverage chart
+  description: User MUST be able to view a bar chart showing coverage for all specifications
+
+- id: SDD-API-001
+  title: Specifications endpoint
+  description: System MUST provide a GET endpoint at /api/specs that returns all specifications
+
+- id: SDD-DATA-001
+  title: Specification data structure
+  description: Each specification MUST contain id, title, coverage, status, priority, and components

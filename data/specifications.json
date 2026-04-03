@@ -1,8 +1,59 @@
 {
+  "totalCoverage": 62.3,
   "specifications": [
-    { "id": "REQ-101", "title": "Авторизация", "coverage": 85, "status": "covered", "components": ["LoginForm", "AuthGuard"] },
-    { "id": "REQ-102", "title": "Дашборд", "coverage": 45, "status": "partial", "components": ["DashboardLayout"] },
-    { "id": "REQ-103", "title": "Экспорт отчёта", "coverage": 10, "status": "missing", "components": [] }
-  ],
-  "totalCoverage": 48.5
+    {
+      "id": "REQ-101",
+      "title": "Authorization and authentication",
+      "description": "Email/password login, JWT tokens, refresh mechanism",
+      "coverage": 95,
+      "status": "covered",
+      "components": ["LoginForm", "AuthGuard", "TokenService"],
+      "priority": "high"
+    },
+    {
+      "id": "REQ-102",
+      "title": "User's dashboard",
+      "description": "Displaying key metrics and graphs",
+      "coverage": 45,
+      "status": "partial",
+      "components": ["DashboardLayout", "MetricCard"],
+      "priority": "high"
+    },
+    {
+      "id": "REQ-103",
+      "title": "Exporting reports",
+      "description": "Export to PDF, Excel, and CSV formats",
+      "coverage": 10,
+      "status": "missing",
+      "components": [],
+      "priority": "medium"
+    },
+    {
+      "id": "REQ-104",
+      "title": "Notifications",
+      "description": "Push notifications and email newsletters",
+      "coverage": 75,
+      "status": "partial",
+      "components": ["NotificationCenter", "EmailService"],
+      "priority": "medium"
+    },
+    {
+      "id": "REQ-105",
+      "title": "User management",
+      "description": "CRUD operations, roles, and access rights",
+      "coverage": 30,
+      "status": "partial",
+      "components": ["UserTable", "RoleManager"],
+      "priority": "high"
+    },
+    {
+      "id": "REQ-106",
+      "title": "API documentation",
+      "description": "Swagger/OpenAPI documentation",
+      "coverage": 0,
+      "status": "missing",
+      "components": [],
+      "priority": "low"
+    }
+  ]
 }

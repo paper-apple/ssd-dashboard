@@ -1,164 +1,127 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import type { DashboardData, Spec } from '@/types';
+import { useState, useEffect, useMemo } from 'react';
+import type { DashboardData, FilterOptions } from '@/types';
+import StatsCards from '@/app/components/StatsCards';
+import CoverageChart from '@/app/components/CoverageChart';
+import Filters from '@/app/components/Filters';
+import SpecCard from '@/app/components/SpecCard';
 
+// @req SDD-UI-001
+// @req SDD-UI-002
 export default function Home() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'covered' | 'partial' | 'missing'>('all');
+  const [filters, setFilters] = useState<FilterOptions>({
+    status: 'all',
+    priority: 'all',
+    search: '',
+    minCoverage: 0
+  });
 
+  // Uploading test data
   useEffect(() => {
     fetch('/api/specs')
       .then(res => res.json())
       .then(setData)
+      .catch(err => console.error('Error loading data:', err))
       .finally(() => setLoading(false));
   }, []);
 
+  // Data filtering
+  const filteredSpecs = useMemo(() => {
+    if (!data) return [];
+    
+    return data.specifications.filter(spec => {
+      if (filters.status !== 'all' && spec.status !== filters.status) return false;
+      if (filters.priority !== 'all' && spec.priority !== filters.priority) return false;
+      if (spec.coverage < filters.minCoverage) return false;
+      
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        return spec.id.toLowerCase().includes(searchLower) || 
+               spec.title.toLowerCase().includes(searchLower);
+      }
+      
+      return true;
+    });
+  }, [data, filters]);
+
   if (loading) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center text-gray-500">Загрузка метрик покрытия...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-gray-600">Uploading data</p>
+        </div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center text-red-500">Ошибка загрузки данных</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg">Data upload error</p>
+        </div>
       </div>
     );
   }
-
-  const filteredSpecs = data.specifications.filter(spec => 
-    filter === 'all' ? true : spec.status === filter
-  );
-
+  
   return (
-    <main className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-2">SDD Navigator Dashboard</h1>
-      <p className="text-gray-600 mb-6">Метрики покрытия спецификаций</p>
-
-      {/* Общая метрика */}
-      <div className="mb-6 p-4 rounded-lg border">
-        <div className="flex justify-between items-center">
-          <div>
-            <span className="text-sm font-medium text-gray-600">Общее покрытие</span>
-            <div className="text-3xl font-bold text-blue-600">{data.totalCoverage}%</div>
-          </div>
-          <div className="text-right">
-            <span className="text-sm text-gray-600">Всего спецификаций</span>
-            <div className="text-2xl font-semibold">{data.specifications.length}</div>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        
+        {/* @req SDD-UI-001 */}
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-center text-gray-900 mb-2">
+            SDD Dashboard
+          </h1>
+          <p className="text-gray-600 text-center">
+            Monitoring the coverage of specifications and components
+          </p>
         </div>
-        <div className="mt-3 w-full bg-gray-200 rounded-full h-3">
+
+        {/* @req SDD-UI-002 */}
+        {/* Statistics */}
+        <StatsCards specifications={filteredSpecs} />
+       
+        {/* @req SDD-UI-006 */}
+        {/* Histogram */}
+        <CoverageChart specifications={filteredSpecs} />
+
+        {/* @req SDD-UI-003, @req SDD-UI-004 */}
+        {/* Adding filters */}
+        <Filters filters={filters} onFilterChange={setFilters} />
+
+        {/* Number of specifications found */}
+        <div className="mb-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-800">
+            specifications
+          </h2>
+          <span className="text-sm text-gray-500">
+            Found: {filteredSpecs.length} of {data.specifications.length}
+          </span>
+        </div>
+
+        {/* @req SDD-UI-05 */}
+        {/* Specification cards */}
+        {filteredSpecs.length === 0 ? (
           <div 
-            className="bg-blue-600 h-3 rounded-full"
-            style={{ width: `${data.totalCoverage}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Фильтры */}
-      <div className="flex gap-2 mb-6">
-        <FilterButton active={filter === 'all'} onClick={() => setFilter('all')}>
-          Все ({data.specifications.length})
-        </FilterButton>
-        <FilterButton active={filter === 'covered'} onClick={() => setFilter('covered')}>
-          Покрытые
-        </FilterButton>
-        <FilterButton active={filter === 'partial'} onClick={() => setFilter('partial')}>
-          Частичные
-        </FilterButton>
-        <FilterButton active={filter === 'missing'} onClick={() => setFilter('missing')}>
-          Отсутствуют
-        </FilterButton>
-      </div>
-
-      {/* Список спецификаций */}
-      <div className="grid gap-4">
-        {filteredSpecs.map((spec) => (
-          <SpecCard key={spec.id} spec={spec} />
-        ))}
-        {filteredSpecs.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
-            Нет спецификаций с таким статусом
+            className="bg-white rounded-lg shadow p-8 text-center"
+          >
+            <p className="text-gray-500 text-lg">Nothing was found</p>
+            <p className="text-gray-400 text-sm mt-2">Try changing the filtering settings</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredSpecs.map((spec) => (
+              <SpecCard key={spec.id} spec={spec} />
+            ))}
           </div>
         )}
       </div>
-    </main>
-  );
-}
-
-// Компонент кнопки фильтра
-function FilterButton({ 
-  active, 
-  onClick, 
-  children 
-}: { 
-  active: boolean; 
-  onClick: () => void; 
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 rounded-lg transition-all ${
-        active 
-          ? 'bg-blue-600 text-white shadow-md' 
-          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-// Компонент карточки спецификации
-function SpecCard({ spec }: { spec: Spec }) {
-  const statusConfig = {
-    covered: { text: 'Покрыта', bg: 'bg-green-100 text-green-800' },
-    partial: { text: 'Частично', bg: 'bg-yellow-100 text-yellow-800' },
-    missing: { text: 'Отсутствует', bg: 'bg-red-100 text-red-800' },
-  }[spec.status];
-
-  const coverageColor = 
-    spec.coverage >= 80 ? 'bg-green-500' :
-    spec.coverage >= 40 ? 'bg-yellow-500' : 'bg-red-500';
-
-  return (
-    <div className="border rounded-lg p-4 shadow-sm">
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-mono text-sm font-semibold text-gray-500">{spec.id}</h3>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${statusConfig.bg}`}>
-              {statusConfig.text}
-            </span>
-          </div>
-          <h2 className="text-lg font-semibold mt-1">{spec.title}</h2>
-        </div>
-        <div className="text-2xl font-bold">
-          {spec.coverage}%
-        </div>
-      </div>
-      
-      <div className="mt-2">
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className={`${coverageColor} h-2 rounded-full transition-all duration-500`}
-            style={{ width: `${spec.coverage}%` }}
-          />
-        </div>
-      </div>
-
-      {spec.components.length > 0 && (
-        <div className="mt-3 text-sm text-gray-600">
-          <span className="font-medium">Компоненты:</span>{' '}
-          {spec.components.join(', ')}
-        </div>
-      )}
     </div>
   );
 }
